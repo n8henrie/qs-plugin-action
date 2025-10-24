@@ -13,6 +13,7 @@ runs:
       with:
         submodules: recursive
     - name: Build plugin
+      shell: bash
       run: |
         set -Eeuf -o pipefail
 
@@ -97,6 +98,7 @@ runs:
 
         log "Built ${PLUGIN_NAME} successfully"
     - name: Archive plugin
+      shell: bash
       working-directory: /tmp/QS/build/Release/Quicksilver.app/Contents/PlugIns/
       run: |
         tar -czvf "${{ env.PLUGIN_NAME }}.tar.gz" "${{ env.PLUGIN_NAME }}"
@@ -120,6 +122,7 @@ runs:
         name: UNSIGNED_PLUGIN
         path: /tmp/QS/build/Release/
     - name: Unarchive artifact and set plugin name in env
+      shell: bash
       run: |
         cd /tmp/QS/build/Release
         tar -xzvf *.tar.gz
@@ -129,6 +132,7 @@ runs:
         PLUGIN_NAME=$(find . -name '*.qsplugin' -exec basename {} \; -quit)
         echo "PLUGIN_NAME=${PLUGIN_NAME}" >> $GITHUB_ENV
     - name: Sign plugin
+      shell: bash
       working-directory: /tmp/QS/build/Release/
       run: |
         # https://docs.github.com/en/actions/deployment/deploying-xcode-applications/installing-an-apple-certificate-on-macos-runners-for-xcode-development
@@ -147,6 +151,7 @@ runs:
         security import "${CERTIFICATE_PATH}" -P "${MACOS_CERTIFICATE_PASSWORD}" -A -t cert -f pkcs12 -k "${KEYCHAIN_PATH}"
         codesign --force -vvv --deep --sign "${SIGNING_IDENTITY}" *.qsplugin
     - name: Archive signed plugin
+      shell: bash
       working-directory: /tmp/QS/build/Release
       run: |
         tar -czvf "${{ env.PLUGIN_NAME }}.tar.gz" "${{ env.PLUGIN_NAME }}"
