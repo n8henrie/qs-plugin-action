@@ -8,15 +8,14 @@ inputs:
 
 runs:
   using: "composite"
-  env:
-    QS_SOURCE_ROOT: /tmp/git/quicksilver
-    CONFIGURATION: ${{ env.CONFIGURATION }}
   steps:
     - uses: actions/checkout@v4
       with:
         submodules: recursive
     - name: Clone QS to latest tag
       shell: bash
+      env:
+        QS_SOURCE_ROOT: /tmp/git/quicksilver
       run: |
         # Much quicker to only clone the latest tag as opposed to full clone and then check out tag
         latest_tag=$(
@@ -38,6 +37,9 @@ runs:
         )
         echo "PLUGIN_NAME=${PLUGIN_NAME}" >> $GITHUB_ENV
     - name: build plugin
+      env:
+        QS_SOURCE_ROOT: /tmp/git/quicksilver
+        CONFIGURATION: ${{ env.CONFIGURATION }}
       run: /tmp/git/quicksilver/Quicksilver/Tools/build-plugin
     - name: Archive plugin
       shell: bash
