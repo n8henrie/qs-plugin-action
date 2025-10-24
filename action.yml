@@ -128,12 +128,12 @@ runs:
     - name: Sign plugin
       shell: bash
       working-directory: /tmp/QS/build/Release/
-      env:
-        MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
-        MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
-        KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+      # env:
+      #   MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+      #   MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+      #   KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
 
-        SIGNING_IDENTITY: ${{ secrets.SIGNING_IDENTITY }}
+      #   SIGNING_IDENTITY: ${{ secrets.SIGNING_IDENTITY }}
       run: |
         # https://docs.github.com/en/actions/deployment/deploying-xcode-applications/installing-an-apple-certificate-on-macos-runners-for-xcode-development
         KEYCHAIN_PATH=${RUNNER_TEMP}/app-signing.keychain-db
