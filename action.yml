@@ -2,102 +2,41 @@ name: build
 description: "This action builds Quicksilver plugins."
 inputs:
   CONFIGURATION:
-    description: "Determines whether a Release or Debug CONFIGURATION will be built"
+    description: "Determines whether a Release or Debug configuration will be built"
     required: true
     default: Release
 
 runs:
   using: "composite"
+  env:
+    QS_SOURCE_ROOT: /tmp/git/quicksilver
+    CONFIGURATION: ${{ env.CONFIGURATION }}
   steps:
     - uses: actions/checkout@v4
       with:
         submodules: recursive
-    - name: Build plugin
+    - name: Clone QS to latest tag
+      shell: bash
+      run: |
+        # Much quicker to only clone the latest tag as opposed to full clone and then check out tag
+        latest_tag=$(
+          git ls-remote --tags --refs --sort="-v:refname" https://github.com/quicksilver/quicksilver |
+            awk -F/ '{ print $NF; exit }'
+        )
+        mkdir -p "${QS_SOURCE_ROOT}"
+        git clone --recurse-submodules --branch="${latest_tag}" --depth=1 https://github.com/quicksilver/Quicksilver.git "${QS_SOURCE_ROOT}"
+        git checkout "${latest_tag}"
+    - name: Set plugin name
       shell: bash
       env:
-        QS_SOURCE_ROOT: /tmp/git/quicksilver
       run: |
-        set -Eeuf -o pipefail
-
-        log() {
-          echo "$*" > /dev/stderr
-        }
-
-        err() {
-          log "error: $*"
-          exit 1
-        }
-
-        json() {
-          # Usage: stdin is json content, $1 is python-formatted query
-          # Example: `xcodebuild -list -json | json '["project"]["configurations"][0]'`
-          python3 -c '
-        import json
-        import sys
-
-        stdin = sys.stdin.read()
-        content = json.loads(stdin)
-
-        json_keys = sys.argv[1]
-        output = eval(f"{content}{json_keys}")
-
-        # Strips quotes if there is a simple result
-        if isinstance(output, str):
-          print(output)
-        # Pretty-print arrays and dicts
-        else:
-          print(json.dumps(output, indent=4))
-        ' "$1"
-        }
-
-        export CONFIGURATION=${CONFIGURATION:-Release} QS_BUILD_ONLY=1
-
-        mkdir -p "${QS_SOURCE_ROOT}"
-        git clone --recurse-submodules "https://github.com/quicksilver/Quicksilver.git" "${QS_SOURCE_ROOT}"
-        pushd "${QS_SOURCE_ROOT}"
-
-        latest_tag=$(git tag --list --sort=creatordate | tail -n 1)
-        git checkout "${latest_tag}"
-
-        pushd Quicksilver
-        while [[ ! -x "/tmp/QS/build/${CONFIGURATION}/Quicksilver.app/Contents/MacOS/Quicksilver" ]]; do
-          xcodebuild \
-            -quiet \
-            -destination generic/platform=macos \
-            -configuration "${CONFIGURATION}" \
-            -scheme 'Quicksilver Distribution' \
-            build || true
-        done
-        popd
-        popd
-
-        project=$(find . -maxdepth 1 -name '*.xcodeproj' -not -iname "*test.xcodeproj" -print -quit)
-
-        if [[ -z "${project}" ]]; then
-          scheme_list=$(xcodebuild -list -json || true)
-        else
-          scheme_list=$(xcodebuild -list -json -project "${project}")
-        fi
-
-        if [[ -z "${scheme_list}" ]]; then
-          err "unable to determine scheme list"
-        fi
-
-        scheme=$(json '["project"]["targets"][0]' <<< "${scheme_list}")
-        log "Using default scheme: ${scheme}"
-
-        # Absence of a project can still build, but will error if `-project` is specified
-        opts=(-CONFIGURATION "${configuration}" -scheme "${scheme}" -destination 'generic/platform=macos')
-        if [[ -n "${project}" ]]; then
-          opts+=(-project "${project}")
-        fi
-        SETTINGS=$(xcodebuild "${opts[@]}" -showBuildSettings -json)
-        xcodebuild build -quiet "${opts[@]}"
-        PLUGIN_NAME=$(json '[0]["buildSettings"]["FULL_PRODUCT_NAME"]' <<< "${SETTINGS}")
-
+        PLUGIN_NAME=$(
+          xcodebuild -showBuildSettings -json |
+            jq -r 'map(.buildSettings.FULL_PRODUCT_NAME) | first'
+        )
         echo "PLUGIN_NAME=${PLUGIN_NAME}" >> $GITHUB_ENV
-
-        log "Built ${PLUGIN_NAME} successfully"
+    - name: build plugin
+      run: /tmp/git/quicksilver/Quicksilver/Tools/build-plugin
     - name: Archive plugin
       shell: bash
       working-directory: /tmp/QS/build/Release/Quicksilver.app/Contents/PlugIns/
@@ -108,9 +47,6 @@ runs:
       with:
         name: UNSIGNED_PLUGIN
         path: /tmp/QS/build/Release/Quicksilver.app/Contents/PlugIns/${{ env.PLUGIN_NAME }}.tar.gz
-
-    # runs-on: macos-latest
-    # steps:
     - name: Download targz artifact
       uses: actions/download-artifact@v4
       with:
@@ -120,7 +56,6 @@ runs:
       shell: bash
       working-directory: /tmp/QS/build/Release/
       run: |
-        set -x
         cd /tmp/QS/build/Release
         tar -xzvf "${PLUGIN_NAME}.tar.gz"
         rm -- "${PLUGIN_NAME}.tar.gz"
@@ -150,3 +85,14 @@ runs:
       with:
         name: ${{ env.PLUGIN_NAME }}
         path: /tmp/QS/build/Release/${{ env.PLUGIN_NAME }}.tar.gz
+    - name: Push to Production
+      if: startsWith(github.ref, 'refs/tags/v')
+      run: |
+        set -x
+        ls -l /tmp/git/quicksilver/Quicksilver/Tools/qs-push-plugin
+
+        ./qs-push-plugin \
+          --user "${{ secrets.QS_PUSH_PLUGIN_USER }}" \
+          --password "${{ secrets.QS_PUSH_PLUGIN_PASS }}" \
+          --changes "<ul><li>this is a test</li></ul>" \
+          "/tmp/QS/build/Release/${{ env.PLUGIN_NAME }}.qsplugin"
