@@ -101,7 +101,7 @@ runs:
       shell: bash
       working-directory: /tmp/QS/build/Release/Quicksilver.app/Contents/PlugIns/
       run: |
-        tar -czvf "${{ env.PLUGIN_NAME }}.tar.gz" "${{ env.PLUGIN_NAME }}"
+        tar -czvf "${PLUGIN_NAME}.tar.gz" "${PLUGIN_NAME}"
     - name: Upload components for sign action
       uses: actions/upload-artifact@v4
       with:
@@ -138,7 +138,7 @@ runs:
         security unlock-keychain -p "${KEYCHAIN_PASSWORD}" "${KEYCHAIN_PATH}"
 
         security import "${CERTIFICATE_PATH}" -P "${MACOS_CERTIFICATE_PASSWORD}" -A -t cert -f pkcs12 -k "${KEYCHAIN_PATH}"
-        codesign --force -vvv --deep --sign "${SIGNING_IDENTITY}" "${PLUGIN_NAME}.qsplugin"
+        codesign --force -vvv --deep --sign "${SIGNING_IDENTITY}" "${PLUGIN_NAME}"
     - name: Archive signed plugin
       shell: bash
       working-directory: /tmp/QS/build/Release
