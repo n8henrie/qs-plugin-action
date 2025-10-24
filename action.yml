@@ -1,8 +1,8 @@
 name: build
 description: "This action builds Quicksilver plugins."
 inputs:
-  configuration:
-    description: "Determines whether a Release or Debug configuration will be built"
+  CONFIGURATION:
+    description: "Determines whether a Release or Debug CONFIGURATION will be built"
     required: true
     default: Release
 
@@ -14,6 +14,10 @@ runs:
         submodules: recursive
     - name: Build plugin
       shell: bash
+      env:
+        QS_SOURCE_ROOT: /tmp/git/quicksilver
+        QS_BUILD_ONLY: 1
+        CONFIGURATION: ${{ inputs.CONFIGURATION }}
       run: |
         set -Eeuf -o pipefail
 
@@ -48,9 +52,6 @@ runs:
         ' "$1"
         }
 
-        export QS_SOURCE_ROOT=/tmp/git/quicksilver QS_BUILD_ONLY=1
-        configuration=${{ inputs.configuration }}
-
         mkdir -p "${QS_SOURCE_ROOT}"
         git clone --recurse-submodules "https://github.com/quicksilver/Quicksilver.git" "${QS_SOURCE_ROOT}"
         pushd "${QS_SOURCE_ROOT}"
@@ -59,11 +60,11 @@ runs:
         git checkout "${latest_tag}"
 
         pushd Quicksilver
-        while [[ ! -x "/tmp/QS/build/${configuration}/Quicksilver.app/Contents/MacOS/Quicksilver" ]]; do
+        while [[ ! -x "/tmp/QS/build/${CONFIGURATION}/Quicksilver.app/Contents/MacOS/Quicksilver" ]]; do
           xcodebuild \
             -quiet \
             -destination generic/platform=macos \
-            -configuration "${configuration}" \
+            -configuration "${CONFIGURATION}" \
             -scheme 'Quicksilver Distribution' \
             build || true
         done
@@ -86,7 +87,7 @@ runs:
         log "Using default scheme: ${scheme}"
 
         # Absence of a project can still build, but will error if `-project` is specified
-        opts=(-configuration "${configuration}" -scheme "${scheme}" -destination 'generic/platform=macos')
+        opts=(-CONFIGURATION "${configuration}" -scheme "${scheme}" -destination 'generic/platform=macos')
         if [[ -n "${project}" ]]; then
           opts+=(-project "${project}")
         fi
