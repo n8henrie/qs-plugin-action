@@ -115,26 +115,15 @@ runs:
       with:
         name: UNSIGNED_PLUGIN
         path: /tmp/QS/build/Release/
-    - name: Unarchive artifact and set plugin name in env
-      shell: bash
-      run: |
-        cd /tmp/QS/build/Release
-        tar -xzvf *.tar.gz
-        rm -r *.tar.gz
-
-        # Set env.PLUGIN_NAME for use in other steps
-        PLUGIN_NAME=$(find . -name '*.qsplugin' -exec basename {} \; -quit)
-        echo "PLUGIN_NAME=${PLUGIN_NAME}" >> $GITHUB_ENV
     - name: Sign plugin
       shell: bash
       working-directory: /tmp/QS/build/Release/
-      # env:
-      #   MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
-      #   MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
-      #   KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
-
-      #   SIGNING_IDENTITY: ${{ secrets.SIGNING_IDENTITY }}
       run: |
+        set -x
+        cd /tmp/QS/build/Release
+        tar -xzvf "${PLUGIN_NAME}.tar.gz"
+        rm -- "${PLUGIN_NAME}.tar.gz"
+
         # https://docs.github.com/en/actions/deployment/deploying-xcode-applications/installing-an-apple-certificate-on-macos-runners-for-xcode-development
         KEYCHAIN_PATH=${RUNNER_TEMP}/app-signing.keychain-db
         CERTIFICATE_PATH=${RUNNER_TEMP}/build_certificate.p12
@@ -149,12 +138,12 @@ runs:
         security unlock-keychain -p "${KEYCHAIN_PASSWORD}" "${KEYCHAIN_PATH}"
 
         security import "${CERTIFICATE_PATH}" -P "${MACOS_CERTIFICATE_PASSWORD}" -A -t cert -f pkcs12 -k "${KEYCHAIN_PATH}"
-        codesign --force -vvv --deep --sign "${SIGNING_IDENTITY}" *.qsplugin
+        codesign --force -vvv --deep --sign "${SIGNING_IDENTITY}" "${PLUGIN_NAME}.qsplugin"
     - name: Archive signed plugin
       shell: bash
       working-directory: /tmp/QS/build/Release
       run: |
-        tar -czvf "${{ env.PLUGIN_NAME }}.tar.gz" "${{ env.PLUGIN_NAME }}"
+        tar -czvf "${PLUGIN_NAME}.tar.gz" "${PLUGIN_NAME}"
     - name: Upload document
       uses: actions/upload-artifact@v4
       with:
