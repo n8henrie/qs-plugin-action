@@ -79,6 +79,7 @@ runs:
         CONFIGURATION: ${{ env.CONFIGURATION }}
       run: |
         set -x
+        "${QS_SOURCE_ROOT}/Quicksilver/Tools/build-qs-plugin" . || true
         "${QS_SOURCE_ROOT}/Quicksilver/Tools/build-qs-plugin" .
     - name: Archive plugin
       shell: bash
