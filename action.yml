@@ -5,10 +5,42 @@ inputs:
     description: "Determines whether a Release or Debug configuration will be built"
     required: true
     default: Release
+  MACOS_CERTIFICATE:
+    reuired: true
+    description: Required to sign built plugin
+  MACOS_CERTIFICATE_PASSWORD:
+    required: true
+  SIGNING_IDENTITY:
+    required: true
+    description: Required to sign built plugin
+
+  QS_PUSH_PLUGIN_USER:
+    required: true
+    description: User for pushing signed plugin to production
+  QS_PUSH_PLUGIN_PASS:
+    required: true
+    description: Password for pushing signed plugin to production
+
+  TEST_DOES_THIS_SHOW_UP_ANYWHERE:
+    required: true
+    description: Sanity check secrets are staying secret across actions
 
 runs:
   using: "composite"
   steps:
+    - name: Mask secret inputs Clone QS to latest tag
+      shell: bash
+      run: |
+        echo "::add-mask::${{ inputs.MACOS_CERTIFICATE }}"
+        echo "::add-mask::${{ inputs.MACOS_CERTIFICATE_PASSWORD }}"
+        echo "::add-mask::${{ inputs.SIGNING_IDENTITY }}"
+        echo "::add-mask::${{ inputs.QS_PUSH_PLUGIN_USER }}"
+        echo "::add-mask::${{ inputs.QS_PUSH_PLUGIN_PASS }}"
+
+        # TODO
+        echo "TEST_DOES_THIS_SHOW_UP_ANYWHERE=${TEST_DOES_THIS_SHOW_UP_ANYWHERE}"
+        echo "::add-mask::${{ inputs.TEST_DOES_THIS_SHOW_UP_ANYWHERE }}"
+        echo "TEST_DOES_THIS_SHOW_UP_ANYWHERE=${TEST_DOES_THIS_SHOW_UP_ANYWHERE}"
     - uses: actions/checkout@v4
       with:
         submodules: recursive
@@ -17,13 +49,18 @@ runs:
       env:
         QS_SOURCE_ROOT: /tmp/git/quicksilver
       run: |
+        # sanity check secrets are secret
+        env | grep DOES_THIS_SHOW_UP_ANYWHERE
+
+        # TODO
+        echo "TEST_DOES_THIS_SHOW_UP_ANYWHERE=${TEST_DOES_THIS_SHOW_UP_ANYWHERE}"
         # Much quicker to only clone the latest tag as opposed to full clone and then check out tag
         latest_tag=$(
           git ls-remote --tags --refs --sort="-v:refname" https://github.com/quicksilver/quicksilver |
             awk -F/ '{ print $NF; exit }'
         )
         mkdir -p "${QS_SOURCE_ROOT}"
-        # TODO
+        # TODO run on the main branch if merged
         # git clone --recurse-submodules --branch="${latest_tag}" --depth=1 https://github.com/quicksilver/Quicksilver.git "${QS_SOURCE_ROOT}"
         # git checkout "${latest_tag}"
         git clone --recurse-submodules --branch=qs-push-plugin.swift --depth=1 https://github.com/quicksilver/Quicksilver.git "${QS_SOURCE_ROOT}"
@@ -65,19 +102,24 @@ runs:
         rm -- "${PLUGIN_NAME}.tar.gz"
 
         # https://docs.github.com/en/actions/deployment/deploying-xcode-applications/installing-an-apple-certificate-on-macos-runners-for-xcode-development
-        KEYCHAIN_PATH=${RUNNER_TEMP}/app-signing.keychain-db
-        CERTIFICATE_PATH=${RUNNER_TEMP}/build_certificate.p12
+        keychain_path=${RUNNER_TEMP}/app-signing.keychain-db
+        certificate_path=${RUNNER_TEMP}/build_certificate.p12
 
         echo -n "${MACOS_CERTIFICATE}" |
-          base64 --decode --output "${CERTIFICATE_PATH}"
+          base64 --decode --output "${certificate_path}"
 
-        security create-keychain -p "${KEYCHAIN_PASSWORD}" "${KEYCHAIN_PATH}"
-        security default-keychain -s "${KEYCHAIN_PATH}"
-        security set-keychain-settings -lut 21600 "${KEYCHAIN_PATH}"
+        # TODO: remove keychain pass from org secrets if not needed
+        # TODO: remove keychain pass from QS signing if not needed
+        keychain_pass=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
+        echo "::add-mask::${keychain_pass}"
 
-        security unlock-keychain -p "${KEYCHAIN_PASSWORD}" "${KEYCHAIN_PATH}"
+        security create-keychain -p "${keychain_pass}" "${keychain_path}"
+        security default-keychain -s "${keychain_path}"
+        security set-keychain-settings -lut 21600 "${keychain_path}"
 
-        security import "${CERTIFICATE_PATH}" -P "${MACOS_CERTIFICATE_PASSWORD}" -A -t cert -f pkcs12 -k "${KEYCHAIN_PATH}"
+        security unlock-keychain -p "${keychain_pass}" "${keychain_path}"
+
+        security import "${certificate_path}" -P "${MACOS_CERTIFICATE_PASSWORD}" -A -t cert -f pkcs12 -k "${keychain_path}"
         codesign --force -vvv --deep --sign "${SIGNING_IDENTITY}" "${PLUGIN_NAME}"
     - name: Archive signed plugin
       shell: bash
@@ -91,12 +133,15 @@ runs:
         path: /tmp/QS/build/Release/${{ env.PLUGIN_NAME }}.tar.gz
     - name: Push to Production
       if: startsWith(github.ref, 'refs/tags/v')
+      shell: bash
       run: |
         set -x
-        ls -l /tmp/git/quicksilver/Quicksilver/Tools/qs-push-plugin
 
-        ./qs-push-plugin \
-          --user "${{ secrets.QS_PUSH_PLUGIN_USER }}" \
-          --password "${{ secrets.QS_PUSH_PLUGIN_PASS }}" \
-          --changes "<ul><li>this is a test</li></ul>" \
-          "/tmp/QS/build/Release/${{ env.PLUGIN_NAME }}.qsplugin"
+        changelog=$(git log --format=%b --max-count=1 master)
+
+        # TODO unecho if this works
+        echo ./qs-push-plugin \
+        --user "${{ inputs.QS_PUSH_PLUGIN_USER }}" \
+        --password "${{ inputs.QS_PUSH_PLUGIN_PASS }}" \
+        --changes "${changelog}" \
+        "/tmp/QS/build/Release/${{ env.PLUGIN_NAME }}.qsplugin"
