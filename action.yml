@@ -50,7 +50,7 @@ runs:
         QS_SOURCE_ROOT: /tmp/git/quicksilver
       run: |
         # sanity check secrets are secret
-        env | grep DOES_THIS_SHOW_UP_ANYWHERE
+        env | grep DOES_THIS_SHOW_UP_ANYWHERE || true
 
         # TODO
         echo "TEST_DOES_THIS_SHOW_UP_ANYWHERE=${TEST_DOES_THIS_SHOW_UP_ANYWHERE}"
