@@ -28,7 +28,7 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Mask secret inputs Clone QS to latest tag
+    - name: Mask secret inputs
       shell: bash
       run: |
         echo "::add-mask::${{ inputs.MACOS_CERTIFICATE }}"
@@ -78,8 +78,6 @@ runs:
         QS_SOURCE_ROOT: /tmp/git/quicksilver
         CONFIGURATION: ${{ env.CONFIGURATION }}
       run: |
-        set -x
-        "${QS_SOURCE_ROOT}/Quicksilver/Tools/build-qs-plugin" . || true
         "${QS_SOURCE_ROOT}/Quicksilver/Tools/build-qs-plugin" .
     - name: Archive plugin
       shell: bash
