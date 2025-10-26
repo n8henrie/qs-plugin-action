@@ -66,7 +66,6 @@ runs:
         git clone --recurse-submodules --branch=qs-push-plugin.swift --depth=1 https://github.com/quicksilver/Quicksilver.git "${QS_SOURCE_ROOT}"
     - name: Set plugin name
       shell: bash
-      env:
       run: |
         PLUGIN_NAME=$(
           xcodebuild -showBuildSettings -json |
@@ -74,6 +73,7 @@ runs:
         )
         echo "PLUGIN_NAME=${PLUGIN_NAME}" >> $GITHUB_ENV
     - name: build plugin
+      shell: bash
       env:
         QS_SOURCE_ROOT: /tmp/git/quicksilver
         CONFIGURATION: ${{ env.CONFIGURATION }}
