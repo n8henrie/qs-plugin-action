@@ -89,16 +89,11 @@ runs:
       working-directory: /tmp/QS/build/Release/Quicksilver.app/Contents/PlugIns/
       run: |
         tar -czvf "${PLUGIN_NAME}.tar.gz" "${PLUGIN_NAME}"
-    - name: Upload components for sign action
+    - name: Upload unsigned plugin
       uses: actions/upload-artifact@v4
       with:
         name: UNSIGNED_PLUGIN
-        path: /tmp/QS/build/Release/Quicksilver.app/Contents/PlugIns/${{ env.PLUGIN_NAME }}.tar.gz
-    - name: Download targz artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: UNSIGNED_PLUGIN
-        path: /tmp/QS/build/Release/
+        path: /tmp/QS/build/Release/${{ env.PLUGIN_NAME }}.tar.gz
     - name: Sign plugin
       shell: bash
       working-directory: /tmp/QS/build/Release/
@@ -139,8 +134,9 @@ runs:
       shell: bash
       working-directory: /tmp/QS/build/Release
       run: |
+        rm -f -- "${PLUGIN_NAME}.tar.gz"
         tar -czvf "${PLUGIN_NAME}.tar.gz" "${PLUGIN_NAME}"
-    - name: Upload document
+    - name: Upload signed plugin with checksum
       uses: actions/upload-artifact@v4
       with:
         name: ${{ env.PLUGIN_NAME }}
