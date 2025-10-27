@@ -164,4 +164,4 @@ runs:
           --user "${{ inputs.QS_PUSH_PLUGIN_USER }}" \
           --password "${{ inputs.QS_PUSH_PLUGIN_PASS }}" \
           --changes "${changelog}" \
-          "/tmp/QS/build/Release/${{ env.PLUGIN_NAME }}.qsplugin"
+          "/tmp/QS/build/Release/${{ env.PLUGIN_NAME }}"
