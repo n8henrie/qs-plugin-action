@@ -76,7 +76,7 @@ runs:
       shell: bash
       env:
         QS_SOURCE_ROOT: /tmp/git/quicksilver
-        CONFIGURATION: ${{ env.CONFIGURATION }}
+        CONFIGURATION: ${{ inputs.CONFIGURATION }}
       run: |
         "${QS_SOURCE_ROOT}/Quicksilver/Tools/build-qs-plugin" .
     - name: Archive plugin
