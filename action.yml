@@ -70,6 +70,9 @@ runs:
         QS_SOURCE_ROOT: /tmp/git/quicksilver
         CONFIGURATION: ${{ inputs.CONFIGURATION }}
       run: |
+        # Because we're using a tagged release of Quicksilver we can hopefully
+        # assume that the tests have already passed and save some build time here
+        export QS_DONT_TEST=1
         "${QS_SOURCE_ROOT}/Quicksilver/Tools/build-qs-plugin" .
     # This seems to need to run after building the plugin; running beforehand oddly gives
     # `foo.bundle` as FULL_PRODUCT_NAME as opposed to `foo.qsplugin`
