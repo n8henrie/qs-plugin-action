@@ -64,6 +64,15 @@ runs:
         # git clone --recurse-submodules --branch="${latest_tag}" --depth=1 https://github.com/quicksilver/Quicksilver.git "${QS_SOURCE_ROOT}"
         # git checkout "${latest_tag}"
         git clone --recurse-submodules --branch=qs-push-plugin.swift --depth=1 https://github.com/quicksilver/Quicksilver.git "${QS_SOURCE_ROOT}"
+    - name: build plugin
+      shell: bash
+      env:
+        QS_SOURCE_ROOT: /tmp/git/quicksilver
+        CONFIGURATION: ${{ inputs.CONFIGURATION }}
+      run: |
+        "${QS_SOURCE_ROOT}/Quicksilver/Tools/build-qs-plugin" .
+    # This seems to need to run after building the plugin; running beforehand oddly gives
+    # `foo.bundle` as FULL_PRODUCT_NAME as opposed to `foo.qsplugin`
     - name: Set plugin name
       shell: bash
       run: |
@@ -72,13 +81,6 @@ runs:
             jq -r 'map(.buildSettings.FULL_PRODUCT_NAME) | first'
         )
         echo "PLUGIN_NAME=${PLUGIN_NAME}" >> $GITHUB_ENV
-    - name: build plugin
-      shell: bash
-      env:
-        QS_SOURCE_ROOT: /tmp/git/quicksilver
-        CONFIGURATION: ${{ inputs.CONFIGURATION }}
-      run: |
-        "${QS_SOURCE_ROOT}/Quicksilver/Tools/build-qs-plugin" .
     - name: Archive plugin
       shell: bash
       working-directory: /tmp/QS/build/Release/Quicksilver.app/Contents/PlugIns/
