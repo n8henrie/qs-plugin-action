@@ -90,10 +90,11 @@ runs:
       run: |
         tar -czvf "${PLUGIN_NAME}.tar.gz" "${PLUGIN_NAME}"
     - name: Upload unsigned plugin
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: UNSIGNED_PLUGIN
         path: /tmp/QS/build/Release/${{ env.PLUGIN_NAME }}.tar.gz
+        if-no-files-found: error
     - name: Sign plugin
       shell: bash
       working-directory: /tmp/QS/build/Release/
@@ -137,9 +138,10 @@ runs:
         rm -f -- "${PLUGIN_NAME}.tar.gz"
         tar -czvf "${PLUGIN_NAME}.tar.gz" "${PLUGIN_NAME}"
     - name: Upload signed plugin with checksum
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: ${{ env.PLUGIN_NAME }}
+        if-no-files-found: error
         path: |
           /tmp/QS/build/Release/${{ env.PLUGIN_NAME }}.tar.gz
           /tmp/QS/build/Release/checksum.txt
