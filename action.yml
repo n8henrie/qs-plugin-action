@@ -113,7 +113,10 @@ runs:
 
         # TODO: remove keychain pass from org secrets if not needed
         # TODO: remove keychain pass from QS signing if not needed
-        keychain_pass=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
+        keychain_pass=$(
+          LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom |
+            head -c 20
+        )
         echo "::add-mask::${keychain_pass}"
 
         security create-keychain -p "${keychain_pass}" "${keychain_path}"
