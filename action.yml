@@ -86,14 +86,16 @@ runs:
         echo "PLUGIN_NAME=${PLUGIN_NAME}" >> $GITHUB_ENV
     - name: Archive plugin
       shell: bash
-      working-directory: /tmp/QS/build/Release
+      env:
+        CONFIGURATION: ${{ inputs.CONFIGURATION }}
       run: |
+        cd "/tmp/QS/build/${CONFIGURATION}/Quicksilver.app/Contents/PlugIns"
         tar -czvf "${PLUGIN_NAME}.tar.gz" "${PLUGIN_NAME}"
     - name: Upload unsigned plugin
       uses: actions/upload-artifact@v5
       with:
         name: UNSIGNED_PLUGIN
-        path: /tmp/QS/build/Release/${{ env.PLUGIN_NAME }}.tar.gz
+        path: /tmp/QS/build/${{ env.CONFIGURATION }}/Quicksilver.app/Contents/PlugIns/${{ env.PLUGIN_NAME }}.tar.gz
         if-no-files-found: error
     - name: Sign plugin
       shell: bash
@@ -109,8 +111,10 @@ runs:
         ./Quicksilver/Tools/qssign "/tmp/QS/build/${CONFIGURATION}/${PLUGIN_NAME}"
     - name: Archive signed plugin
       shell: bash
-      working-directory: /tmp/QS/build/Release
+      env:
+        CONFIGURATION: ${{ inputs.CONFIGURATION }}
       run: |
+        cd "/tmp/QS/build/${CONFIGURATION}/Quicksilver.app/Contents/PlugIns"
         rm -f -- "${PLUGIN_NAME}.tar.gz"
         tar -czvf "${PLUGIN_NAME}.tar.gz" "${PLUGIN_NAME}"
         shasum --algorithm 256 "${PLUGIN_NAME}.tar.gz" > checksum.txt
@@ -120,7 +124,7 @@ runs:
         name: ${{ env.PLUGIN_NAME }}
         if-no-files-found: error
         path: |
-          /tmp/QS/build/Release/${{ env.PLUGIN_NAME }}.tar.gz
+          /tmp/QS/build/${{ env.CONFIGURATION }}/Quicksilver.app/Contents/PlugIns/${{ env.PLUGIN_NAME }}.tar.gz
     - name: Release
       if: startsWith(github.ref, 'refs/tags/v')
       uses: softprops/action-gh-release@v2
