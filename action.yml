@@ -99,6 +99,8 @@ runs:
       shell: bash
       working-directory: /tmp/git/quicksilver
       env:
+        CONFIGURATION: ${{ inputs.CONFIGURATION }}
+
         MACOS_CERTIFICATE: ${{ inputs.MACOS_CERTIFICATE }}
         MACOS_CERTIFICATE_PASSWORD: ${{ inputs.MACOS_CERTIFICATE_PASSWORD }}
         SIGNING_IDENTITY: ${{ inputs.SIGNING_IDENTITY }}
