@@ -21,10 +21,6 @@ inputs:
     required: true
     description: Password for pushing signed plugin to production
 
-  TEST_DOES_THIS_SHOW_UP_ANYWHERE:
-    required: true
-    description: Sanity check secrets are staying secret across actions
-
 runs:
   using: "composite"
   steps:
@@ -36,11 +32,6 @@ runs:
         echo "::add-mask::${{ inputs.SIGNING_IDENTITY }}"
         echo "::add-mask::${{ inputs.QS_PUSH_PLUGIN_USER }}"
         echo "::add-mask::${{ inputs.QS_PUSH_PLUGIN_PASS }}"
-
-        # TODO
-        echo "TEST_DOES_THIS_SHOW_UP_ANYWHERE=${TEST_DOES_THIS_SHOW_UP_ANYWHERE}"
-        echo "::add-mask::${{ inputs.TEST_DOES_THIS_SHOW_UP_ANYWHERE }}"
-        echo "TEST_DOES_THIS_SHOW_UP_ANYWHERE=${TEST_DOES_THIS_SHOW_UP_ANYWHERE}"
     - uses: actions/checkout@v4
       with:
         submodules: recursive
@@ -49,11 +40,6 @@ runs:
       env:
         QS_SOURCE_ROOT: /tmp/git/quicksilver
       run: |
-        # sanity check secrets are secret
-        env | grep DOES_THIS_SHOW_UP_ANYWHERE || true
-
-        # TODO
-        echo "TEST_DOES_THIS_SHOW_UP_ANYWHERE=${TEST_DOES_THIS_SHOW_UP_ANYWHERE}"
         # Much quicker to only clone the latest tag as opposed to full clone and then check out tag
         latest_tag=$(
           git ls-remote --tags --refs --sort="-v:refname" https://github.com/quicksilver/quicksilver |
@@ -109,7 +95,6 @@ runs:
         MACOS_CERTIFICATE_PASSWORD: ${{ inputs.MACOS_CERTIFICATE_PASSWORD }}
         SIGNING_IDENTITY: ${{ inputs.SIGNING_IDENTITY }}
       run: |
-        set -x
         ./Quicksilver/Tools/qssign "/tmp/QS/build/${CONFIGURATION}/${PLUGIN_NAME}"
     - name: Archive signed plugin
       shell: bash
