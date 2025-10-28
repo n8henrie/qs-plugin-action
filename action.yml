@@ -89,9 +89,6 @@ runs:
       working-directory: /tmp/QS/build/Release
       run: |
         tar -czvf "${PLUGIN_NAME}.tar.gz" "${PLUGIN_NAME}"
-        #TODO
-        ls -lAtr
-        realpath .
     - name: Upload unsigned plugin
       uses: actions/upload-artifact@v5
       with:
@@ -102,6 +99,8 @@ runs:
       shell: bash
       working-directory: /tmp/QS/build/Release/
       run: |
+        set -x
+
         cd /tmp/QS/build/Release
         tar -xzvf "${PLUGIN_NAME}.tar.gz"
         rm -- "${PLUGIN_NAME}.tar.gz"
@@ -141,8 +140,6 @@ runs:
       run: |
         rm -f -- "${PLUGIN_NAME}.tar.gz"
         tar -czvf "${PLUGIN_NAME}.tar.gz" "${PLUGIN_NAME}"
-        ls -lAtr
-        realpath .
     - name: Upload signed plugin with checksum
       uses: actions/upload-artifact@v5
       with:
