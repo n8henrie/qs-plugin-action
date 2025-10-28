@@ -97,7 +97,7 @@ runs:
       uses: actions/upload-artifact@v5
       with:
         name: UNSIGNED_PLUGIN
-        path: /tmp/QS/build/${{ env.CONFIGURATION }}/Quicksilver.app/Contents/PlugIns/${{ env.PLUGIN_NAME }}.tar.gz
+        path: /tmp/QS/build/${{ inputs.CONFIGURATION }}/Quicksilver.app/Contents/PlugIns/${{ env.PLUGIN_NAME }}.tar.gz
         if-no-files-found: error
     - name: Sign plugin
       shell: bash
@@ -126,7 +126,7 @@ runs:
         name: ${{ env.PLUGIN_NAME }}
         if-no-files-found: error
         path: |
-          /tmp/QS/build/${{ env.CONFIGURATION }}/Quicksilver.app/Contents/PlugIns/${{ env.PLUGIN_NAME }}.tar.gz
+          /tmp/QS/build/${{ inputs.CONFIGURATION }}/Quicksilver.app/Contents/PlugIns/${{ env.PLUGIN_NAME }}.tar.gz
     - name: Release
       if: startsWith(github.ref, 'refs/tags/v')
       uses: softprops/action-gh-release@v2
