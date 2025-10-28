@@ -97,38 +97,12 @@ runs:
         if-no-files-found: error
     - name: Sign plugin
       shell: bash
-      working-directory: /tmp/QS/build/Release/
+      working-directory: /tmp/git/quicksilver
+      env:
+        CONFIGURATION: ${{ inputs.CONFIGURATION }}
       run: |
         set -x
-
-        cd /tmp/QS/build/Release
-        tar -xzvf "${PLUGIN_NAME}.tar.gz"
-        rm -- "${PLUGIN_NAME}.tar.gz"
-
-        # https://docs.github.com/en/actions/deployment/deploying-xcode-applications/installing-an-apple-certificate-on-macos-runners-for-xcode-development
-        keychain_path=${RUNNER_TEMP}/app-signing.keychain-db
-        certificate_path=${RUNNER_TEMP}/build_certificate.p12
-
-        echo -n "${MACOS_CERTIFICATE}" |
-          base64 --decode --output "${certificate_path}"
-
-        # TODO: remove keychain pass from org secrets if not needed
-        # TODO: remove keychain pass from QS signing if not needed
-        keychain_pass=$(
-          head -c 8192 /dev/urandom |
-            LC_ALL=C tr -dc A-Za-z0-9 |
-            head -c 20
-        )
-        echo "::add-mask::${keychain_pass}"
-
-        security create-keychain -p "${keychain_pass}" "${keychain_path}"
-        security default-keychain -s "${keychain_path}"
-        security set-keychain-settings -lut 21600 "${keychain_path}"
-
-        security unlock-keychain -p "${keychain_pass}" "${keychain_path}"
-
-        security import "${certificate_path}" -P "${MACOS_CERTIFICATE_PASSWORD}" -A -t cert -f pkcs12 -k "${keychain_path}"
-        codesign --force -vvv --deep --sign "${SIGNING_IDENTITY}" "${PLUGIN_NAME}"
+        ./Quicksilver/Tools/qssign "/tmp/QS/build/${CONFIGURATION}/${PLUGIN_NAME}"
     - name: Create checksum
       shell: bash
       run: |
