@@ -86,9 +86,10 @@ runs:
         echo "PLUGIN_NAME=${PLUGIN_NAME}" >> $GITHUB_ENV
     - name: Archive plugin
       shell: bash
-      working-directory: /tmp/QS/build/Release/Quicksilver.app/Contents/PlugIns/
+      working-directory: /tmp/QS/build/Release
       run: |
         tar -czvf "${PLUGIN_NAME}.tar.gz" "${PLUGIN_NAME}"
+        #TODO
         ls -lAtr
         realpath .
     - name: Upload unsigned plugin
