@@ -100,13 +100,11 @@ runs:
       working-directory: /tmp/git/quicksilver
       env:
         CONFIGURATION: ${{ inputs.CONFIGURATION }}
+
         MACOS_CERTIFICATE: ${{ inputs.MACOS_CERTIFICATE }}
         MACOS_CERTIFICATE_PASSWORD: ${{ inputs.MACOS_CERTIFICATE_PASSWORD }}
         KEYCHAIN_PASSWORD: ${{ inputs.KEYCHAIN_PASSWORD }}
-
         SIGNING_IDENTITY: ${{ inputs.SIGNING_IDENTITY }}
-        NOTARIZING_ID: ${{ inputs.NOTARIZING_ID }}
-        NOTARIZING_PASS: ${{ inputs.NOTARIZING_PASS }}
       run: |
         set -x
         ./Quicksilver/Tools/qssign "/tmp/QS/build/${CONFIGURATION}/${PLUGIN_NAME}"
