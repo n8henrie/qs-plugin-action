@@ -103,7 +103,6 @@ runs:
 
         MACOS_CERTIFICATE: ${{ inputs.MACOS_CERTIFICATE }}
         MACOS_CERTIFICATE_PASSWORD: ${{ inputs.MACOS_CERTIFICATE_PASSWORD }}
-        KEYCHAIN_PASSWORD: ${{ inputs.KEYCHAIN_PASSWORD }}
         SIGNING_IDENTITY: ${{ inputs.SIGNING_IDENTITY }}
       run: |
         set -x
