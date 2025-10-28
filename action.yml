@@ -107,17 +107,13 @@ runs:
       run: |
         set -x
         ./Quicksilver/Tools/qssign "/tmp/QS/build/${CONFIGURATION}/${PLUGIN_NAME}"
-    - name: Create checksum
-      shell: bash
-      run: |
-        cd /tmp/QS/build/Release/
-        shasum --algorithm 256 "${PLUGIN_NAME}" > checksum.txt
     - name: Archive signed plugin
       shell: bash
       working-directory: /tmp/QS/build/Release
       run: |
         rm -f -- "${PLUGIN_NAME}.tar.gz"
         tar -czvf "${PLUGIN_NAME}.tar.gz" "${PLUGIN_NAME}"
+        shasum --algorithm 256 "${PLUGIN_NAME}.tar.gz" > checksum.txt
     - name: Upload signed plugin with checksum
       uses: actions/upload-artifact@v5
       with:
