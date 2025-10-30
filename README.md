@@ -9,5 +9,6 @@ Quicksilver plugins rely on some of the Quicksilver frameworks, so in broad stro
 - uploads an unsigned and signed version of the plugin to the action's outputs
 - for tagged releases, a release is created and the plugin is pushed to production
   - the *body* (**excluding** the first line) of the commit message is used as the changelog argument for the `qs-push-plugin` tool
+  - this should be markdown which is parsed by `pandoc` into html prior to submission
 
 [0]: https://qsapp.com/

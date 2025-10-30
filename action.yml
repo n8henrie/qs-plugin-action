@@ -121,13 +121,18 @@ runs:
       if: startsWith(github.ref, 'refs/tags/v')
       shell: bash
       run: |
-        changelog=$(
+        set -Eeuf -o pipefail
+
+        brew install pandoc
+
+        changelog_md=$(
           git log --format=%b --max-count=1 "${GITHUB_REF_NAME}" |
-            /usr/bin/sed '/^$/d'
+            sed '/^$/d'
         )
+        changelog_html=$(pandoc -f markdown <<<"${changelog_md}")
 
         ./qs-push-plugin \
           --user "${{ inputs.QS_PUSH_PLUGIN_USER }}" \
           --password "${{ inputs.QS_PUSH_PLUGIN_PASS }}" \
-          --changes "${changelog}" \
+          --changes "${changelog_html}" \
           "/tmp/QS/build/Release/${{ env.PLUGIN_NAME }}"
