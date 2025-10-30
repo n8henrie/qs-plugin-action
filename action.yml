@@ -77,8 +77,6 @@ runs:
       run: |
         cd "/tmp/QS/build/${CONFIGURATION}/Quicksilver.app/Contents/PlugIns"
         tar -czvf "${PLUGIN_NAME}.tar.gz" "${PLUGIN_NAME}"
-        ls -lAtr
-        pwd
     - name: Upload unsigned plugin
       uses: actions/upload-artifact@v5
       with:
